@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Star World Group · Review & Work Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy:#23236F; --indigo:#3A3A9E; --paper:#F6F6FA; --ink:#1B1B33; --ink-soft:#57577A;
+    --line:#DDDCEC; --radius:14px; --gold:#B8902E;
+    --bm:#5E35B1; --rm:#00695C; --gm:#E65100; --md:#B71C1C; --se:#6A1B9A; --dmc:#1565C0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.45;}
+  h1,h2,h3{font-family:'Sora',sans-serif;}
+  .topbar{position:sticky;top:0;z-index:50;background:var(--navy);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .brand .wordmark{font-family:'Sora';font-weight:800;font-size:18px;}
+  .brand .wordmark span{color:var(--gold);}
+  .brand .tag{font-size:10px;color:#B7B7E0;letter-spacing:.08em;text-transform:uppercase;}
+  .tabs{display:flex;gap:4px;background:rgba(255,255,255,.08);padding:4px;border-radius:999px;flex-wrap:wrap;}
+  .tab{padding:7px 14px;border-radius:999px;border:none;background:transparent;color:#CBCBEE;font-weight:600;font-size:12.5px;cursor:pointer;}
+  .tab.active{background:#fff;color:var(--navy);}
+  .btn-dl{background:#fff;color:var(--navy);border:none;padding:9px 16px;border-radius:9px;font-weight:700;font-size:12.5px;cursor:pointer;}
+  main{max-width:1180px;margin:0 auto;padding:28px 20px 70px;}
+  .view{display:none;} .view.active{display:block;}
+  .page-head{margin-bottom:18px;}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--indigo);margin-bottom:4px;}
+  .page-head h1{font-size:24px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+  .page-head p{color:var(--ink-soft);font-size:14px;max-width:700px;}
+  .notice{background:#FFF8E1;color:#7a5a13;font-size:12.5px;padding:10px 14px;border-radius:8px;margin-bottom:16px;}
+  .role-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .role-chip{padding:7px 14px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .role-chip.active{color:#fff;border-color:transparent;background:var(--navy);}
+  .cal-controls{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+  .cal-controls select,.cal-controls button{font-family:inherit;font-size:13px;padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:#fff;}
+  .cal-controls button{background:var(--navy);color:#fff;border:none;font-weight:600;cursor:pointer;}
+  .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:28px;}
+  .day-header{text-align:center;font-size:11px;font-weight:700;color:var(--ink-soft);padding:6px 0;text-transform:uppercase;}
+  .day-cell{background:#fff;border:1px solid var(--line);border-radius:12px;min-height:130px;padding:8px;display:flex;flex-direction:column;gap:3px;cursor:pointer;}
+  .day-cell.weekend{background:#EEEEF7;opacity:.85;}
+  .day-cell.today{border:2px solid var(--indigo);}
+  .day-num{font-family:'Sora';font-weight:700;font-size:13px;color:var(--navy);}
+  .day-task{font-size:10px;padding:2px 5px;border-radius:5px;line-height:1.25;}
+  .day-task.meeting{background:#E8EAF6;color:#1A237E;font-weight:600;border-left:3px solid #3949AB;}
+  .day-task.se{background:#F3E5F5;color:#4A148C;}
+  .day-task.bm{background:#EDE7F6;color:#4A148C;}
+  .day-task.rm{background:#E0F2F1;color:#004D40;}
+  .day-task.gm{background:#FFF3E0;color:#E65100;}
+  .day-task.md{background:#FFEBEE;color:#B71C1C;}
+  .day-task.special{background:#FFF8E1;color:#F57F17;font-weight:600;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;}
+  .card h2{font-size:14px;color:var(--navy);margin-bottom:12px;}
+  .task-item{display:flex;gap:10px;padding:10px 12px;background:#EEEEF7;border-radius:10px;font-size:13px;margin-bottom:6px;}
+  .task-item .check{width:18px;height:18px;border:2px solid #D9DAEA;border-radius:50%;flex-shrink:0;cursor:pointer;}
+  .task-item .check.done{background:#2F8F5B;border-color:#2F8F5B;}
+  .meeting-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+  .meeting-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;border-top:4px solid var(--indigo);}
+  .meeting-card h3{font-size:14px;color:var(--navy);margin-bottom:6px;}
+  .meeting-meta{font-size:11.5px;color:var(--ink-soft);margin-bottom:8px;}
+  table.rev{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:16px;}
+  table.rev th{background:var(--navy);color:#fff;padding:10px 8px;text-align:left;font-size:11px;text-transform:uppercase;}
+  table.rev td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.rev tr:nth-child(even){background:#FAFAFC;}
+  .btn{background:var(--navy);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);}
+  .add-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .add-row select,.add-row input{font-family:inherit;font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);}
+  .recurrence-box{background:#F7F7FC;border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px;}
+  .recurrence-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;}
+  .recurrence-note{font-size:11.5px;color:var(--ink-soft);margin-top:7px;}
+  @media(max-width:800px){.month-grid{grid-template-columns:repeat(2,1fr);}.day-header{display:none;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="wordmark">STAR <span>WORLD</span></div>
+    <div class="tag">Review & Work Calendar</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-view="calendar">Calendar</button>
+    <button class="tab" data-view="daily">Daily Reviews</button>
+    <button class="tab" data-view="weekly">Weekly Reviews</button>
+    <button class="tab" data-view="monthly">Monthly</button>
+    <button class="tab" data-view="quarterly">Quarterly</button>
+    <button class="tab" data-view="format">Meeting Format</button>
+    <button class="tab" data-view="cycle">Hierarchy & Cycle</button>
+    <button class="tab" data-view="today">Today</button>
+    <button class="tab" data-view="manage">Customise</button>
+  </div>
+  <button class="btn-dl" onclick="downloadExcel()">⬇ Download Excel</button>
+</div>
+
+<main>
+  <!-- CALENDAR -->
+  <div class="view active" id="view-calendar">
+    <div class="page-head">
+      <div class="eyebrow">Hierarchy: SE → BM → RM → GM → MD</div>
+      <h1>Review & Work Calendar</h1>
+      <p>Aligned to Star World Review Calendar document. Daily → Weekly → Monthly → Quarterly. Click a date for details.</p>
+    </div>
+    <div class="notice"><strong>MD rule:</strong> MD is not part of daily operational reviews. Only critical/strategic issues via GM. Thursday/Saturday carry weekly review weight.</div>
+    <div class="role-filters" id="role-filters">
+      <button class="role-chip active" data-role="ALL">All</button>
+      <button class="role-chip" data-role="SE">SE</button>
+      <button class="role-chip" data-role="BM">BM</button>
+      <button class="role-chip" data-role="RM">RM</button>
+      <button class="role-chip" data-role="GM">GM</button>
+      <button class="role-chip" data-role="MD">MD</button>
+    </div>
+    <div class="cal-controls">
+      <select id="month-select"></select>
+      <select id="year-select"></select>
+      <button onclick="renderCalendar()">Show</button>
+    </div>
+    <div class="month-grid" id="month-grid"></div>
+  </div>
+
+  <!-- DAILY REVIEWS TABLE -->
+  <div class="view" id="view-daily">
+    <div class="page-head">
+      <div class="eyebrow">Section 2 — Review Calendar Document</div>
+      <h1>Daily Review Calendar</h1>
+      <p>Every daily review with participants, key areas and output.</p>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="rev" id="daily-table"></table>
+    </div>
+  </div>
+
+  <!-- WEEKLY -->
+  <div class="view" id="view-weekly">
+    <div class="page-head">
+      <div class="eyebrow">Section 3 — Review Calendar Document</div>
+      <h1>Weekly Review Calendar</h1>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="rev" id="weekly-table"></table>
+    </div>
+    <div class="card">
+      <h2>RM Weekly Review Checklist (from document)</h2>
+      <ul id="rm-weekly-list" style="font-size:13px;padding-left:18px;line-height:1.7;"></ul>
+    </div>
+  </div>
+
+  <!-- MONTHLY -->
+  <div class="view" id="view-monthly">
+    <div class="page-head">
+      <div class="eyebrow">Section 4 — Review Calendar Document</div>
+      <h1>Monthly Review Calendar</h1>
+      <p>Full monthly review schedule with timing, participants and key areas.</p>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="rev" id="monthly-table"></table>
+    </div>
+    <div class="notice">Monthly reviews evaluate business performance, departments and management decisions. Last week includes Strategic Business Review with MD.</div>
+  </div>
+
+  <!-- QUARTERLY (new tab) -->
+  <div class="view" id="view-quarterly">
+    <div class="page-head">
+      <div class="eyebrow">Section 5 — Review Calendar Document</div>
+      <h1>Quarterly Strategy & Board Review</h1>
+      <p>Moves away from daily operations. Focus on strategy and business direction.</p>
+    </div>
+    <div class="card">
+      <h2>Participants</h2>
+      <p style="font-size:14px;">MD · GM · Relevant Department Heads · Other management members as required</p>
+    </div>
+    <div class="card">
+      <h2>Full Agenda (18 points)</h2>
+      <ol id="quarterly-agenda" style="font-size:13px;padding-left:18px;line-height:1.85;"></ol>
+    </div>
+    <div class="card">
+      <h2>Required Output</h2>
+      <ul style="font-size:13px;padding-left:18px;line-height:1.7;">
+        <li>Quarterly Strategic Action Plan</li>
+        <li>Management Decisions</li>
+        <li>Responsibility (owner) for each action</li>
+        <li>Deadline for each action</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- MEETING FORMAT (new tab) -->
+  <div class="view" id="view-format">
+    <div class="page-head">
+      <div class="eyebrow">Section 7 — Review Calendar Document</div>
+      <h1>Review Meeting Format</h1>
+      <p>Every review meeting must use the same structure. Decisions become tasks in the Task Management System.</p>
+    </div>
+    <div class="card">
+      <h2>A. Previous Review</h2>
+      <ul style="font-size:13px;padding-left:18px;line-height:1.7;">
+        <li>Previous action points</li>
+        <li>Responsible person</li>
+        <li>Deadline</li>
+        <li>Completed / Pending</li>
+        <li>Reason for delay</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>B. Current Performance</h2>
+      <ul style="font-size:13px;padding-left:18px;line-height:1.7;">
+        <li>Target</li>
+        <li>Actual</li>
+        <li>Achievement %</li>
+        <li>Gap</li>
+        <li>Major reasons</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>C. Operational Issues</h2>
+      <p style="font-size:13px;">Sales · Customer · Stock · Collection · Purchase · HR · Marketing · System/SOP</p>
+    </div>
+    <div class="card">
+      <h2>D. Corrective Actions</h2>
+      <table class="rev">
+        <tr><th>Issue</th><th>Root Cause</th><th>Action</th><th>Responsible</th><th>Deadline</th><th>Reviewer</th></tr>
+        <tr><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h2>E. New Decisions</h2>
+      <p style="font-size:13px;margin-bottom:10px;">Every decision must be converted into a <strong>Task Management System</strong> task.</p>
+      <p style="font-size:13px;"><strong>Flow example:</strong> Weekly RM Review → Sales gap identified → Task created (Improve Branch X) → Responsible: BM → Deadline → Reviewer: RM → Evidence → Completed / Rework → Closed</p>
+    </div>
+  </div>
+
+  <!-- HIERARCHY & CYCLE (new tab) -->
+  <div class="view" id="view-cycle">
+    <div class="page-head">
+      <div class="eyebrow">Sections 1 & 9 — Review Calendar Document</div>
+      <h1>Hierarchy & Review Cycle</h1>
+    </div>
+    <div class="card">
+      <h2>Overall Review Hierarchy</h2>
+      <p style="font-size:16px;font-weight:700;color:var(--navy);margin:10px 0;">Sales Executive → BM → RM → GM → MD</p>
+      <p style="font-size:13px;margin-top:8px;"><strong>Supporting functions:</strong> Purchase | Inventory | Finance | HR | Marketing | MIS/Digital Marketing → BM/RM/GM → MD where strategic</p>
+    </div>
+    <div class="card">
+      <h2>Review System Flow</h2>
+      <p style="font-size:14px;line-height:2;">
+        <strong>Daily Monitoring</strong> → Identify Gap → Immediate Action<br>
+        ↓<br>
+        <strong>Weekly Performance Review</strong> → Analyse Gap → Corrective Action<br>
+        ↓<br>
+        <strong>Monthly Business Review</strong> → Evaluate · Departments · Management Decisions<br>
+        ↓<br>
+        <strong>Quarterly Strategic Review</strong> → Strategy · Direction · Major Decisions · Next-Quarter Plan
+      </p>
+    </div>
+    <div class="card">
+      <h2>MD Rule (Important)</h2>
+      <p style="font-size:13px;">The MD should <strong>not</strong> become part of daily operational reviews. Routine issues resolve through:</p>
+      <p style="font-size:14px;font-weight:700;margin:8px 0;">Sales Executive → BM → RM → GM</p>
+      <p style="font-size:13px;">Only critical or strategic matters should reach the MD (via GM).</p>
+    </div>
+    <div class="card">
+      <h2>Connect Reviews to Task Management</h2>
+      <p style="font-size:13px;line-height:1.7;">Every gap or decision from a review should create a task: Owner · Deadline · Reviewer · Evidence · Status (Completed / Rework / Closed). This stops meetings from being discussion-only.</p>
+    </div>
+  </div>
+
+  <!-- TODAY -->
+  <div class="view" id="view-today">
+    <div class="page-head">
+      <div class="eyebrow">Execution</div>
+      <h1 id="today-title">Today</h1>
+    </div>
+    <div id="today-panel"></div>
+  </div>
+
+  <!-- MANAGE -->
+  <div class="view" id="view-manage">
+    <div class="page-head">
+      <div class="eyebrow">Customise</div>
+      <h1>Add Task or Meeting</h1>
+      <p>Add daily/weekly tasks by role, or add Daily · Weekly · Monthly · Quarterly review meetings. Everything saves in this browser and appears on Calendar + Excel.</p>
+    </div>
+
+    <div class="card">
+      <h2>1. Add Task (by Role + Weekday)</h2>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px;">Shows on Calendar and Today for that day of week.</p>
+      <div class="add-row">
+        <select id="add-role"></select>
+        <select id="add-day"></select>
+        <input type="text" id="add-task-text" placeholder="Task description…" style="flex:1;min-width:180px;">
+        <button class="btn" onclick="addCustomTask()">Add Task</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2. Edit / Remove Tasks</h2>
+      <div class="add-row">
+        <select id="edit-role" onchange="renderTaskEditor()"></select>
+        <select id="edit-day" onchange="renderTaskEditor()"></select>
+      </div>
+      <div id="task-editor"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="meeting-form-title">3. Add Review Meeting (Daily / Weekly / Monthly / Quarterly)</h2>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px;">Pick a template or type a name. Multi-select <strong>days</strong> and <strong>participants</strong>.</p>
+
+      <div class="add-row">
+        <select id="add-mtg-level" onchange="onMeetingLevelChange()">
+          <option value="Daily">Daily</option>
+          <option value="Weekly">Weekly</option>
+          <option value="Monthly">Monthly</option>
+          <option value="Quarterly">Quarterly</option>
+        </select>
+        <select id="add-mtg-template" onchange="applyMeetingTemplate()">
+          <option value="">— Meeting name template —</option>
+          <option value="Sales Huddle">Sales Huddle</option>
+          <option value="Branch Performance Review">Branch Performance Review</option>
+          <option value="DAR Review">DAR Review</option>
+          <option value="Customer Reactivation Review">Customer Reactivation Review</option>
+          <option value="Collection Review">Collection Review</option>
+          <option value="Stock Exception Review">Stock Exception Review</option>
+          <option value="Critical Issue Review">Critical Issue Review</option>
+          <option value="GM Business Review">GM Business Review</option>
+          <option value="MD Exception Review">MD Exception Review</option>
+          <option value="Weekly Target & Action Planning">Weekly Target & Action Planning</option>
+          <option value="Branch Performance / RM Visit Review">Branch Performance / RM Visit Review</option>
+          <option value="Marketing Coordination Meeting">Marketing Coordination Meeting</option>
+          <option value="Sales & Collection Closure Review">Sales & Collection Closure Review</option>
+          <option value="Weekly Business Review – GM">Weekly Business Review – GM</option>
+          <option value="Weekly Business Review – MD">Weekly Business Review – MD</option>
+          <option value="Regional Performance Review">Regional Performance Review</option>
+          <option value="Monthly Strategic Business Review">Monthly Strategic Business Review</option>
+          <option value="Custom…">Custom (type below)</option>
+        </select>
+        <input type="text" id="add-mtg-name" placeholder="Or type custom meeting name…" style="flex:1;min-width:160px;">
+      </div>
+
+      <div id="weekday-pick-block">
+        <div style="margin:10px 0 6px;font-size:12px;font-weight:700;color:var(--ink-soft);">Days (multi-select) — for Daily / Weekly recurring</div>
+        <div class="add-row" id="day-multi" style="gap:12px;">
+          <label style="font-size:13px;"><input type="checkbox" class="mtg-day" value="Sunday"> Sun</label>
+          <label style="font-size:13px;"><input type="checkbox" class="mtg-day" value="Monday"> Mon</label>
+          <label style="font-size:13px;"><input type="checkbox" class="mtg-day" value="Tuesday"> Tue</label>
+          <label style="font-size:13px;"><input type="checkbox" class="mtg-day" value="Wednesday"> Wed</label>
+          <label style="font-size:13px;"><input type="checkbox" class="mtg-day" value="Thursday"> Thu</label>
+          <label style="font-size:13px;"><input type="checkbox" class="mtg-day" value="Friday"> Fri</label>
+          <label style="font-size:13px;"><input type="checkbox" class="mtg-day" value="Saturday"> Sat</label>
+        </div>
+      </div>
+
+      <div id="date-pick-block" style="display:none;margin:10px 0;">
+        <div class="recurrence-box" id="monthly-recurrence-box">
+          <div class="recurrence-title">Monthly meeting schedule</div>
+          <div class="add-row" style="margin-bottom:6px;">
+            <select id="monthly-pattern" onchange="toggleMonthlyPattern()">
+              <option value="specific">Specific date</option>
+              <option value="nth-week">Week of month</option>
+            </select>
+
+            <span id="specific-date-wrap">
+              <input type="date" id="add-mtg-date" style="font-family:inherit;font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);">
+            </span>
+
+            <span id="nth-week-wrap" style="display:none;">
+              <select id="monthly-week">
+                <option value="1">1st week</option>
+                <option value="2">2nd week</option>
+                <option value="3">3rd week</option>
+                <option value="4" selected>4th week</option>
+                <option value="5">5th week</option>
+                <option value="last">Last week</option>
+              </select>
+              <select id="monthly-day">
+                <option value="Sunday">Sunday</option>
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday" selected>Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+              </select>
+            </span>
+          </div>
+          <div class="recurrence-note" id="monthly-pattern-note">
+            Choose an exact date, or select a week + day for a recurring monthly meeting. Example: <strong>4th week + Thursday</strong> = every month on the 4th Thursday.
+          </div>
+        </div>
+
+        <div id="quarterly-date-wrap" style="display:none;">
+          <div style="margin:0 0 6px;font-size:12px;font-weight:700;color:var(--ink-soft);">Specific date (for Quarterly — once in the period)</div>
+          <input type="date" id="add-mtg-quarterly-date" style="font-family:inherit;font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);">
+          <span style="font-size:12px;color:var(--ink-soft);margin-left:8px;">Pick the exact date this quarterly meeting will be held</span>
+        </div>
+      </div>
+
+      <div style="margin:12px 0 6px;font-size:12px;font-weight:700;color:var(--ink-soft);">Participants (multi-select)</div>
+      <div class="add-row" style="gap:12px;">
+        <label style="font-size:13px;"><input type="checkbox" class="mtg-part" value="SE"> SE</label>
+        <label style="font-size:13px;"><input type="checkbox" class="mtg-part" value="BM"> BM</label>
+        <label style="font-size:13px;"><input type="checkbox" class="mtg-part" value="RM"> RM</label>
+        <label style="font-size:13px;"><input type="checkbox" class="mtg-part" value="GM"> GM</label>
+        <label style="font-size:13px;"><input type="checkbox" class="mtg-part" value="MD"> MD</label>
+        <label style="font-size:13px;"><input type="checkbox" class="mtg-part" value="Marketing"> Marketing</label>
+        <label style="font-size:13px;"><input type="checkbox" class="mtg-part" value="Finance"> Finance</label>
+        <label style="font-size:13px;"><input type="checkbox" class="mtg-part" value="HR"> HR</label>
+        <label style="font-size:13px;"><input type="checkbox" class="mtg-part" value="Inventory"> Inventory</label>
+        <label style="font-size:13px;"><input type="checkbox" class="mtg-part" value="Sales Team"> Sales Team</label>
+      </div>
+
+      <div class="add-row" style="margin-top:10px;">
+        <select id="add-mtg-lead">
+          <option value="BM">Lead: BM</option>
+          <option value="RM" selected>Lead: RM</option>
+          <option value="GM">Lead: GM</option>
+          <option value="MD">Lead: MD</option>
+          <option value="SE">Lead: SE</option>
+        </select>
+        <input type="text" id="add-mtg-agenda" placeholder="Agenda / key areas (use | between points)" style="flex:1;min-width:180px;">
+        <button class="btn" id="meeting-submit-btn" onclick="addCustomMeeting()">Add Meeting</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>4. Edit / Remove Custom Meetings</h2>
+      <div id="custom-mtg-list"></div>
+    </div>
+
+    <div class="card">
+      <button class="btn ghost" onclick="if(confirm('Reset ALL custom tasks and meetings to Review Calendar defaults?')){localStorage.removeItem('sw_rev_tasks');localStorage.removeItem('sw_rev_meetings');location.reload();}">Reset to Review Calendar defaults</button>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ========== DATA FROM REVIEW CALENDAR DOCUMENT ========== */
+const ROLES = ['SE','BM','RM','GM','MD'];
+
+const DAILY_REVIEWS = [
+  {day:'Mon–Thu & Sat', time:'Daily', review:'Sales Huddle', participants:'RM + BM + Sales Team', areas:"Yesterday's sales, today's target, customer follow-ups, B2B visits, dormant calls, collection, key priorities", output:'Daily targets & action points'},
+  {day:'Daily', time:'Morning', review:'Branch Performance Review', participants:'BM + Sales Team', areas:'Target vs actual, pending orders, customer enquiries, follow-ups', output:'Daily sales action plan'},
+  {day:'Daily', time:'Throughout day', review:'Branch Operations Monitoring', participants:'BM', areas:'Discipline, cleanliness, display, complaints, stock issues', output:'Corrective actions'},
+  {day:'Daily', time:'End of day', review:'DAR Review', participants:'BM → RM', areas:'Staff activities, sales calls, visits, follow-ups, issues', output:'DAR compliance & actions'},
+  {day:'Daily', time:'End of day', review:'Customer Reactivation Review', participants:'Sales Executive → BM → RM', areas:'Calls, connected customers, interested customers, follow-ups, reactivations', output:'Reactivation follow-up list'},
+  {day:'Daily', time:'Daily', review:'Collection Review', participants:'BM/RM + Sales Team', areas:'Outstanding customers, due payments, promised payments', output:'Collection follow-up'},
+  {day:'Daily', time:'Daily', review:'Stock Exception Review', participants:'BM/RM + Inventory/Purchase where required', areas:'Shortage, near-expiry, slow-moving, fast-moving, dead stock', output:'Stock action'},
+  {day:'Daily', time:'Daily', review:'Critical Issue Review', participants:'RM/GM', areas:'Major sales, customer, stock, finance or operational exceptions', output:'Escalation/corrective action'},
+  {day:'Daily', time:'Daily', review:'GM Business Review', participants:'GM + relevant managers', areas:'Company/branch sales, collection, stock, purchase, marketing, operations', output:'Management actions'},
+  {day:'Daily – Exception Only', time:'10–15 min', review:'MD Exception Review', participants:'MD + GM', areas:'Critical/high-value/strategic issues only', output:'Decision / approval'}
+];
+
+const WEEKLY_REVIEWS = [
+  {day:'Monday', review:'Weekly Target & Action Planning', participants:'RM + BM + Sales Team', agenda:'Weekly target, branch priorities, outbound calls, B2B visits, customer reactivation, collection priorities', output:'Weekly action plan'},
+  {day:'Tuesday', review:'Branch Performance / RM Visit Review', participants:'RM + BM + Sales Team', agenda:'Branch sales, productivity, operations, customer issues, stock, staff performance', output:'Branch corrective actions'},
+  {day:'Wednesday', review:'Marketing Coordination Meeting', participants:'RM + Marketing/Digital Team + relevant BM', agenda:'Digital campaigns, offers, leads, branch content, product promotion, campaign performance', output:'Marketing action plan'},
+  {day:'Thursday', review:'Sales & Collection Closure Review', participants:'RM + BM + Sales Team', agenda:'Sales gap, pending quotations/orders, collection, credit, follow-ups, outbound activities', output:'Closure actions'},
+  {day:'Saturday', review:'Weekly Business Review – GM', participants:'GM + RM + Department Heads as required', agenda:'Sales, profit, collection, stock, marketing, HR, operations, risks, corrective actions', output:'GM action plan'},
+  {day:'Saturday', review:'Weekly Business Review – MD', participants:'MD + GM', agenda:'Overall business performance, major gaps, strategic decisions', output:'MD decisions & action points'}
+];
+
+const RM_WEEKLY_CHECKLIST = [
+  'Branch-wise target vs actual','Sales Executive productivity','Dormant customer campaign','New customer acquisition',
+  'Repeat customer follow-up','Quotations and pending orders','Collection and overdue accounts','Stock ageing',
+  'Branch operations','DAR compliance','Customer complaints','Corrective actions'
+];
+
+const MONTHLY_REVIEWS = [
+  {timing:'1st–3rd Working Day', review:'Previous Month Closing Review', participants:'BM + RM', areas:'Sales, target achievement, collection, stock, customer activity'},
+  {timing:'1st Week', review:'Regional Performance Review', participants:'RM + GM', areas:'Branch-wise sales, profitability, productivity, collection, inventory'},
+  {timing:'1st Week', review:'Department Performance Review', participants:'GM + Department Heads', areas:'Purchase, Finance, Inventory, Marketing, HR, Operations'},
+  {timing:'2nd Week', review:'Sales & Customer Review', participants:'GM + RM + Sales Team', areas:'New customers, repeat customers, dormant reactivation, B2B, B2C'},
+  {timing:'2nd Week', review:'Inventory Review', participants:'GM + Purchase + Inventory + RM', areas:'Stock ageing, dead stock, near-expiry, stock availability, slow/fast moving'},
+  {timing:'2nd/3rd Week', review:'Collection & Credit Review', participants:'GM + Finance + RM', areas:'Receivables, overdue, credit limits, collection performance'},
+  {timing:'3rd Week', review:'Marketing Performance Review', participants:'GM + Marketing/Digital Team + RM', areas:'Campaign performance, leads, content, promotions, digital enquiries'},
+  {timing:'3rd Week', review:'HR & People Review', participants:'GM + HR + Department Heads', areas:'Manpower, recruitment, attendance, productivity, training'},
+  {timing:'4th Week', review:'SOP & Compliance Review', participants:'GM + Department Heads', areas:'SOP implementation, process gaps, compliance, corrective actions'},
+  {timing:'Last Week', review:'Monthly Strategic Business Review', participants:'MD + GM + Department Heads', areas:'Business performance, profit, risks, strategy, major decisions'},
+  {timing:'Last Week', review:'BenAc–Star World Review', participants:'BenAc Team + RM/GM as required', areas:'Project progress, implementation status, recommendations'}
+];
+
+const QUARTERLY_AGENDA = [
+  'Revenue growth','Profitability','Branch performance','Customer growth','New customer acquisition',
+  'Dormant customer reactivation','B2B/B2C performance','Inventory turnover','Dead/slow-moving stock',
+  'Working capital','Collection & receivables','Marketing ROI','HR & organizational performance',
+  'Major risks','Strategic projects','Expansion opportunities','Previous quarter action-plan closure','Next-quarter strategy'
+];
+
+// Day tasks derived from document (for calendar + checklist)
+const WEEKDAY_TASKS = {
+  0: { // Sunday / Sat-style field — use for Sat mapping in Bahrain; document uses Mon-Thu & Sat for huddle
+    SE: ['Customer reactivation calls','Follow-ups logged in CRM','Personal day plan'],
+    BM: ['Branch Performance Review with team','Target vs actual','Pending orders & enquiries','Follow-ups assigned'],
+    RM: ['Sales Huddle participation','Branch operations support','Collection & stock exceptions','Critical issues to GM if any'],
+    GM: ['GM Business Review inputs','Critical Issue Review','Exception items for MD only if required'],
+    MD: ['MD Exception Review only if critical/strategic']
+  },
+  1: { // Monday
+    SE: ['Sales Huddle participation','Yesterday follow-ups closed','Today targets clear','B2B / dormant calls as assigned','CRM updated'],
+    BM: ['Sales Huddle with RM & team','Branch Performance Review (morning)','Daily sales action plan set','Collection follow-up','Stock exceptions noted'],
+    RM: ['Weekly Target & Action Planning meeting','Sales Huddle','Weekly action plan issued','Branch priorities set','Reactivation & collection priorities'],
+    GM: ['GM Business Review','Critical issues','Support weekly planning'],
+    MD: ['Exception only']
+  },
+  2: { // Tuesday
+    SE: ['Branch visit support / field activity','Customer visits','CRM updates','Productivity targets'],
+    BM: ['Branch Performance / RM Visit Review','Operations, stock, staff performance','Corrective actions from RM visit'],
+    RM: ['Branch Performance / RM Visit Review','Branch sales, productivity, operations','Customer issues, stock, staff','Branch corrective actions'],
+    GM: ['GM Business Review','Monitor branch visit outcomes'],
+    MD: ['Exception only']
+  },
+  3: { // Wednesday
+    SE: ['Campaign / offer execution support','Lead follow-ups','CRM hygiene'],
+    BM: ['Marketing coordination support','Offer execution at branch','Lead handling'],
+    RM: ['Marketing Coordination Meeting','Digital campaigns, offers, leads','Branch content & product promotion','Marketing action plan'],
+    GM: ['GM Business Review','Marketing alignment'],
+    MD: ['Exception only']
+  },
+  4: { // Thursday
+    SE: ['Sales & collection closure support','Pending quotations/orders follow-up','CRM week hygiene'],
+    BM: ['Sales & Collection Closure Review','Sales gap, pending orders, collection, credit','Closure actions'],
+    RM: ['Sales & Collection Closure Review','Sales gap, quotations/orders, collection, credit','Outbound activities closure','Closure actions documented'],
+    GM: ['GM Business Review','Closure visibility'],
+    MD: ['Exception only']
+  },
+  5: { // Friday — light / exception in many Gulf calendars; document stress Sat for weekly GM/MD
+    SE: ['Catch-up follow-ups','CRM clean'],
+    BM: ['Pending issues closed','Prepare for Saturday reviews if required'],
+    RM: ['Prepare packs for Saturday Weekly Business Review','Open actions listed'],
+    GM: ['Prepare Weekly Business Review pack'],
+    MD: ['Exception only']
+  },
+  6: { // Saturday — Weekly Business Review GM + MD
+    SE: ['Support numbers if required'],
+    BM: ['Support RM with weekly numbers'],
+    RM: ['Weekly Business Review – GM (attend)','Branch-wise performance ready','RM weekly checklist covered'],
+    GM: ['Weekly Business Review – GM','Sales, profit, collection, stock, marketing, HR, operations, risks','Action plan'],
+    MD: ['Weekly Business Review – MD','Overall performance, major gaps, strategic decisions']
+  }
+};
+
+let currentRole = 'ALL';
+let selectedDate = new Date();
+
+let CUSTOM_MEETINGS = [];
+(function loadCustom(){
+  try{
+    const t = localStorage.getItem('sw_rev_tasks');
+    if(t){ const p=JSON.parse(t); Object.keys(p).forEach(k=>{ if(WEEKDAY_TASKS[k]) WEEKDAY_TASKS[k]=p[k]; }); }
+    const m = localStorage.getItem('sw_rev_meetings');
+    if(m) CUSTOM_MEETINGS = JSON.parse(m);
+  }catch(e){}
+})();
+function saveCustom(){
+  localStorage.setItem('sw_rev_tasks', JSON.stringify(WEEKDAY_TASKS));
+  localStorage.setItem('sw_rev_meetings', JSON.stringify(CUSTOM_MEETINGS));
+}
+
+function isWeekend(d){ return d.getDay()===5; } // Fri softer; Sat is review day in doc
+function fmtDate(d){ return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+
+function meetingsForDay(dayIdx){
+  const list = [];
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  if(dayIdx>=1 && dayIdx<=4 || dayIdx===6) list.push({name:'Sales Huddle', lead:'RM', participants:'RM+BM+Sales'});
+  if(dayIdx>=1 && dayIdx<=4 || dayIdx===6) list.push({name:'Branch Performance Review', lead:'BM', participants:'BM+Sales'});
+  if(dayIdx===1) list.push({name:'Weekly Target & Action Planning', lead:'RM', participants:'RM+BM+Sales'});
+  if(dayIdx===2) list.push({name:'Branch Performance / RM Visit Review', lead:'RM', participants:'RM+BM+Sales'});
+  if(dayIdx===3) list.push({name:'Marketing Coordination Meeting', lead:'RM', participants:'RM+Marketing+BM'});
+  if(dayIdx===4) list.push({name:'Sales & Collection Closure Review', lead:'RM', participants:'RM+BM+Sales'});
+  if(dayIdx===6){
+    list.push({name:'Weekly Business Review – GM', lead:'GM', participants:'GM+RM+Heads'});
+    list.push({name:'Weekly Business Review – MD', lead:'MD', participants:'MD+GM'});
+  }
+  // Custom meetings
+  CUSTOM_MEETINGS.forEach(m=>{
+    if(m.level==='Daily' && (dayIdx>=1 && dayIdx<=4 || dayIdx===6)) {
+      list.push(m);
+    } else if(m.level==='Weekly' && m.day && m.day===dayNames[dayIdx]) {
+      list.push(m);
+    } else if(m.level==='Weekly' && !m.day && dayIdx===4) {
+      list.push(m); // default Thu
+    } else if(m.level==='Monthly' && m.recurrence==='nth-week') {
+      // The actual date is checked below in renderCalendar/showToday via isMonthlyPatternDate.
+    } else if(m.level==='Monthly' && m.date && dayIdx===4) {
+      // Legacy monthly records: show on Thursday as a reminder.
+      list.push(m);
+    } else if(m.level==='Quarterly' && dayIdx===4) {
+      list.push(m);
+    }
+  });
+  return list;
+}
+
+function renderCalendar(){
+  const month = +document.getElementById('month-select').value;
+  const year = +document.getElementById('year-select').value;
+  const grid = document.getElementById('month-grid');
+  grid.innerHTML = '';
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(h=>{
+    const el=document.createElement('div'); el.className='day-header'; el.textContent=h; grid.appendChild(el);
+  });
+  const first=new Date(year,month,1);
+  const start=first.getDay();
+  const dim=new Date(year,month+1,0).getDate();
+  for(let i=0;i<start;i++){ const e=document.createElement('div'); e.className='day-cell'; e.style.visibility='hidden'; grid.appendChild(e); }
+  const today=new Date();
+  for(let day=1;day<=dim;day++){
+    const d=new Date(year,month,day);
+    const cell=document.createElement('div');
+    cell.className='day-cell'+(d.getDay()===5?' weekend':'')+(d.toDateString()===today.toDateString()?' today':'');
+    let html=`<div class="day-num">${day}</div>`;
+    const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    meetingsForDay(d.getDay()).forEach(m=>{
+      if(currentRole!=='ALL' && currentRole!==m.lead && !(m.participants||'').includes(currentRole)) return;
+      html+=`<div class="day-task meeting" title="${m.name}">📅 ${m.name}</div>`;
+    });
+    // Date-specific monthly/quarterly custom meetings
+    CUSTOM_MEETINGS.filter(m => m.date === iso).forEach(m=>{
+      if(currentRole!=='ALL' && currentRole!==m.lead && !(m.participants||'').includes(currentRole)) return;
+      html+=`<div class="day-task meeting" title="${m.name} (${m.level})">📅 ${m.name}</div>`;
+    });
+
+    // Recurring monthly meetings such as 4th Thursday of every month
+    CUSTOM_MEETINGS.filter(m =>
+      m.level==='Monthly' &&
+      m.recurrence==='nth-week' &&
+      isMonthlyPatternDate(d, m.weekOfMonth, m.weekday)
+    ).forEach(m=>{
+      if(currentRole!=='ALL' && currentRole!==m.lead && !(m.participants||'').includes(currentRole)) return;
+      html+=`<div class="day-task meeting" title="${m.name} (${monthlyScheduleLabel(m)})">📅 ${m.name}</div>`;
+    });
+    const tasks=WEEKDAY_TASKS[d.getDay()]||{};
+    ROLES.forEach(role=>{
+      if(currentRole!=='ALL' && currentRole!==role) return;
+      if(tasks[role]&&tasks[role].length){
+        const n=tasks[role].length;
+        const short=tasks[role][0].length>28?tasks[role][0].slice(0,26)+'…':tasks[role][0];
+        html+=`<div class="day-task ${role.toLowerCase()}" title="${tasks[role].join('\\n')}">${role} (${n}): ${short}</div>`;
+      }
+    });
+    if(d.getDay()===6) html+=`<div class="day-task special">★ Weekly GM + MD Review</div>`;
+    if(d.getDay()===1) html+=`<div class="day-task special">★ Weekly Planning</div>`;
+    cell.innerHTML=html;
+    cell.onclick=()=>{ selectedDate=d; showToday(); switchView('today'); };
+    grid.appendChild(cell);
+  }
+}
+
+function showToday(){
+  document.getElementById('today-title').textContent = fmtDate(selectedDate)+' · '+selectedDate.toLocaleDateString('en-GB',{weekday:'long'});
+  const dayIdx=selectedDate.getDay();
+  let html='';
+  const mtgs=meetingsForDay(dayIdx).slice();
+  CUSTOM_MEETINGS.filter(m =>
+    m.level==='Monthly' &&
+    m.recurrence==='nth-week' &&
+    isMonthlyPatternDate(selectedDate, m.weekOfMonth, m.weekday)
+  ).forEach(m=>{
+    if(!mtgs.some(x=>x===m)) mtgs.push(m);
+  });
+  if(mtgs.length){
+    html+='<div class="card"><h2>📅 Reviews / Meetings today</h2>';
+    mtgs.forEach(m=>{
+      const scheduleText = m.level==='Monthly' ? monthlyScheduleLabel(m) : (m.date ? m.date : (m.day || 'Recurring'));
+      html+=`<div class="task-item"><div class="check" onclick="this.classList.toggle('done')"></div><div><strong>${m.name}</strong><br><span style="font-size:12px;color:var(--ink-soft)">Lead: ${m.lead} · ${m.participants} · ${scheduleText}</span></div></div>`;
+    });
+    html+='</div>';
+  }
+  const tasks=WEEKDAY_TASKS[dayIdx]||{};
+  ROLES.forEach(role=>{
+    if(currentRole!=='ALL' && currentRole!==role) return;
+    const list=tasks[role]||[];
+    if(!list.length) return;
+    html+=`<div class="card"><h2>${role} tasks</h2>`;
+    list.forEach(t=>{
+      html+=`<div class="task-item"><div class="check" onclick="this.classList.toggle('done')"></div><div>${t}</div></div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('today-panel').innerHTML = html || '<div class="card">No items for this filter.</div>';
+}
+
+function renderDailyTable(){
+  let h='<tr><th>Day</th><th>Time</th><th>Review</th><th>Participants</th><th>Key Review Areas</th><th>Output</th><th>Source</th></tr>';
+  DAILY_REVIEWS.forEach(r=>{
+    h+=`<tr><td>${r.day}</td><td>${r.time||''}</td><td><strong>${r.review}</strong></td><td>${r.participants||''}</td><td>${r.areas||''}</td><td>${r.output||''}</td><td>Standard</td></tr>`;
+  });
+  // Custom daily meetings
+  CUSTOM_MEETINGS.filter(m=>m.level==='Daily').forEach(m=>{
+    h+=`<tr style="background:#F3E5F5;"><td>${m.day||'Daily'}</td><td>Custom</td><td><strong>${m.name}</strong></td><td>${m.participants||''}</td><td>${m.agenda||m.areas||''}</td><td>As defined</td><td>Custom</td></tr>`;
+  });
+  document.getElementById('daily-table').innerHTML=h;
+}
+function renderWeeklyTable(){
+  let h='<tr><th>Day</th><th>Review Meeting</th><th>Participants</th><th>Main Agenda</th><th>Output</th><th>Source</th></tr>';
+  WEEKLY_REVIEWS.forEach(r=>{
+    h+=`<tr><td>${r.day}</td><td><strong>${r.review}</strong></td><td>${r.participants||''}</td><td>${r.agenda||''}</td><td>${r.output||''}</td><td>Standard</td></tr>`;
+  });
+  CUSTOM_MEETINGS.filter(m=>m.level==='Weekly').forEach(m=>{
+    h+=`<tr style="background:#F3E5F5;"><td>${m.day||'—'}</td><td><strong>${m.name}</strong></td><td>${m.participants||''}</td><td>${m.agenda||m.areas||''}</td><td>As defined</td><td>Custom</td></tr>`;
+  });
+  document.getElementById('weekly-table').innerHTML=h;
+  document.getElementById('rm-weekly-list').innerHTML=RM_WEEKLY_CHECKLIST.map(x=>'<li>'+x+'</li>').join('');
+}
+function renderMonthly(){
+  let h='<tr><th>Timing / Date</th><th>Review</th><th>Participants</th><th>Key Areas</th><th>Source</th></tr>';
+  MONTHLY_REVIEWS.forEach(r=>{
+    h+=`<tr><td>${r.timing}</td><td><strong>${r.review}</strong></td><td>${r.participants||''}</td><td>${r.areas||''}</td><td>Standard</td></tr>`;
+  });
+  CUSTOM_MEETINGS.filter(m=>m.level==='Monthly').forEach(m=>{
+    h+=`<tr style="background:#F3E5F5;"><td>${monthlyScheduleLabel(m)}</td><td><strong>${m.name}</strong></td><td>${m.participants||''}</td><td>${m.agenda||m.areas||''}</td><td>Custom</td></tr>`;
+  });
+  document.getElementById('monthly-table').innerHTML=h;
+}
+
+function renderManage(){
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('add-role').innerHTML=ROLES.map(r=>`<option>${r}</option>`).join('');
+  document.getElementById('add-day').innerHTML=days.map((n,i)=>`<option value="${i}">${n}</option>`).join('');
+  document.getElementById('edit-role').innerHTML=ROLES.map(r=>`<option>${r}</option>`).join('');
+  document.getElementById('edit-day').innerHTML=days.map((n,i)=>`<option value="${i}">${n}</option>`).join('');
+  renderTaskEditor();
+  renderCustomMeetingList();
+}
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>"']/g, function(ch){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch];
+  });
+}
+
+let editingMeetingIndex = -1;
+
+function cancelMeetingEdit(){
+  editingMeetingIndex = -1;
+  const btn = document.getElementById('meeting-submit-btn');
+  if(btn) btn.textContent = 'Add Meeting';
+  const title = document.getElementById('meeting-form-title');
+  if(title) title.textContent = '3. Add Review Meeting (Daily / Weekly / Monthly / Quarterly)';
+  document.getElementById('add-mtg-name').value = '';
+  document.getElementById('add-mtg-agenda').value = '';
+  document.getElementById('add-mtg-template').value = '';
+  document.querySelectorAll('.mtg-day,.mtg-part').forEach(c=>c.checked=false);
+  if(document.getElementById('add-mtg-date')) document.getElementById('add-mtg-date').value = '';
+  if(document.getElementById('add-mtg-quarterly-date')) document.getElementById('add-mtg-quarterly-date').value = '';
+  if(document.getElementById('monthly-pattern')) document.getElementById('monthly-pattern').value = 'specific';
+  if(document.getElementById('monthly-week')) document.getElementById('monthly-week').value = '4';
+  if(document.getElementById('monthly-day')) document.getElementById('monthly-day').value = 'Thursday';
+  document.getElementById('add-mtg-level').value = 'Daily';
+  document.getElementById('add-mtg-lead').value = 'RM';
+  onMeetingLevelChange();
+  toggleMonthlyPattern();
+  renderCustomMeetingList();
+}
+
+function editCustomMeeting(idx){
+  const m = CUSTOM_MEETINGS[idx];
+  if(!m) return;
+  editingMeetingIndex = idx;
+
+  document.getElementById('add-mtg-level').value = m.level || 'Daily';
+  document.getElementById('add-mtg-name').value = m.name || '';
+  document.getElementById('add-mtg-agenda').value = m.agenda || m.areas || '';
+  document.getElementById('add-mtg-lead').value = m.lead || 'RM';
+
+  document.querySelectorAll('.mtg-day,.mtg-part').forEach(c=>c.checked=false);
+
+  const participantValues = String(m.participants || '').split(/\\s*\\+\\s*/).map(x=>x.trim()).filter(Boolean);
+  document.querySelectorAll('.mtg-part').forEach(c=>{
+    c.checked = participantValues.includes(c.value);
+  });
+
+  if(m.day){
+    document.querySelectorAll('.mtg-day').forEach(c=>{
+      c.checked = c.value === m.day;
+    });
+  }
+
+  if(m.level === 'Monthly'){
+    document.getElementById('monthly-pattern').value = m.recurrence === 'nth-week' ? 'nth-week' : 'specific';
+    document.getElementById('monthly-week').value = m.weekOfMonth || '4';
+    document.getElementById('monthly-day').value = m.weekday || 'Thursday';
+    document.getElementById('add-mtg-date').value = m.date || '';
+  } else if(m.level === 'Quarterly'){
+    document.getElementById('add-mtg-quarterly-date').value = m.date || '';
+  }
+
+  onMeetingLevelChange();
+  toggleMonthlyPattern();
+
+  const btn = document.getElementById('meeting-submit-btn');
+  if(btn) btn.textContent = 'Save Changes';
+  const title = document.getElementById('meeting-form-title');
+  if(title) title.textContent = '3. Edit Review Meeting';
+
+  document.getElementById('view-manage').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function removeCustomMeeting(idx){
+  const m = CUSTOM_MEETINGS[idx];
+  if(!m) return;
+  if(!confirm('Remove the custom meeting "' + m.name + '"?')) return;
+
+  CUSTOM_MEETINGS.splice(idx,1);
+  if(editingMeetingIndex === idx) cancelMeetingEdit();
+  else if(editingMeetingIndex > idx) editingMeetingIndex--;
+
+  saveCustom();
+  renderCustomMeetingList();
+  renderCalendar();
+  renderDailyTable();
+  renderWeeklyTable();
+  renderMonthly();
+  renderQuarterlyOnly();
+}
+
+function renderCustomMeetingList(){
+  const box=document.getElementById('custom-mtg-list');
+  if(!box) return;
+  if(!CUSTOM_MEETINGS.length){
+    box.innerHTML='<p style="font-size:13px;color:var(--ink-soft);">No custom meetings yet. Meetings added here can be edited or removed without changing the standard Review Calendar meetings.</p>';
+    return;
+  }
+
+  box.innerHTML=CUSTOM_MEETINGS.map((m,idx)=>{
+    const schedule = m.level==='Monthly'
+      ? monthlyScheduleLabel(m)
+      : (m.date ? '📆 '+escapeHtml(m.date) : (m.day ? escapeHtml(m.day) : 'Recurring/default'));
+
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;flex-wrap:wrap;">
+      <div style="font-size:13px;flex:1;min-width:240px;">
+        <strong>${escapeHtml(m.name)}</strong> · ${escapeHtml(m.level)}${schedule ? ' · '+schedule : ''}
+        <br><span style="color:var(--ink-soft);">Lead: ${escapeHtml(m.lead||'—')} · ${escapeHtml(m.participants||'')} ${m.agenda ? ' · Agenda: '+escapeHtml(m.agenda) : ''}</span>
+      </div>
+      <div style="display:flex;gap:7px;">
+        <button class="btn ghost" onclick="editCustomMeeting(${idx})">Edit</button>
+        <button class="btn ghost" style="color:#B94A3F;" onclick="removeCustomMeeting(${idx})">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function applyMeetingTemplate(){
+  const t = document.getElementById('add-mtg-template').value;
+  if(t && t !== 'Custom…') document.getElementById('add-mtg-name').value = t;
+}
+function toggleMonthlyPattern(){
+  const pattern = document.getElementById('monthly-pattern')?.value || 'specific';
+  const specificWrap = document.getElementById('specific-date-wrap');
+  const nthWrap = document.getElementById('nth-week-wrap');
+  const note = document.getElementById('monthly-pattern-note');
+  if(!specificWrap || !nthWrap) return;
+  specificWrap.style.display = pattern === 'specific' ? 'inline-block' : 'none';
+  nthWrap.style.display = pattern === 'nth-week' ? 'inline-flex' : 'none';
+  if(note){
+    note.innerHTML = pattern === 'nth-week'
+      ? 'Example: <strong>4th week + Thursday</strong> = every month on the 4th Thursday.'
+      : 'Choose the exact date for a one-date monthly meeting.';
+  }
+}
+
+function onMeetingLevelChange(){
+  const level = document.getElementById('add-mtg-level').value;
+  const weekBlock = document.getElementById('weekday-pick-block');
+  const dateBlock = document.getElementById('date-pick-block');
+  const monthlyBox = document.getElementById('monthly-recurrence-box');
+  const quarterlyWrap = document.getElementById('quarterly-date-wrap');
+
+  if(level === 'Monthly'){
+    weekBlock.style.display = 'none';
+    dateBlock.style.display = 'block';
+    if(monthlyBox) monthlyBox.style.display = 'block';
+    if(quarterlyWrap) quarterlyWrap.style.display = 'none';
+    toggleMonthlyPattern();
+  } else if(level === 'Quarterly'){
+    weekBlock.style.display = 'none';
+    dateBlock.style.display = 'block';
+    if(monthlyBox) monthlyBox.style.display = 'none';
+    if(quarterlyWrap) quarterlyWrap.style.display = 'block';
+  } else {
+    weekBlock.style.display = 'block';
+    dateBlock.style.display = 'none';
+  }
+}
+
+function nthWeekdayOfMonth(year, monthIndex, weekdayIndex, nth){
+  const first = new Date(year, monthIndex, 1);
+  const offset = (weekdayIndex - first.getDay() + 7) % 7;
+  const day = 1 + offset + (nth - 1) * 7;
+  const d = new Date(year, monthIndex, day);
+  return d.getMonth() === monthIndex ? d : null;
+}
+
+function lastWeekdayOfMonth(year, monthIndex, weekdayIndex){
+  const last = new Date(year, monthIndex + 1, 0);
+  const offset = (last.getDay() - weekdayIndex + 7) % 7;
+  return new Date(year, monthIndex, last.getDate() - offset);
+}
+
+function isMonthlyPatternDate(date, weekValue, weekdayName){
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const weekdayIndex = dayNames.indexOf(weekdayName);
+  if(weekdayIndex < 0) return false;
+
+  const year = date.getFullYear();
+  const monthIndex = date.getMonth();
+
+  if(weekValue === 'last'){
+    return date.toDateString() === lastWeekdayOfMonth(year, monthIndex, weekdayIndex).toDateString();
+  }
+
+  const nth = Number(weekValue);
+  if(!Number.isFinite(nth)) return false;
+  const target = nthWeekdayOfMonth(year, monthIndex, weekdayIndex, nth);
+  return !!target && date.toDateString() === target.toDateString();
+}
+
+function monthlyScheduleLabel(m){
+  if(m.recurrence === 'nth-week'){
+    const weekLabels = {1:'1st week',2:'2nd week',3:'3rd week',4:'4th week',5:'5th week',last:'Last week'};
+    return (weekLabels[m.weekOfMonth] || m.weekOfMonth) + ' · ' + (m.weekday || 'Thursday');
+  }
+  return m.date ? ('Specific date · ' + m.date) : 'Monthly';
+}
+function addCustomMeeting(){
+  const level = document.getElementById('add-mtg-level').value;
+  let name = document.getElementById('add-mtg-name').value.trim();
+  const tmpl = document.getElementById('add-mtg-template').value;
+  if(!name && tmpl && tmpl !== 'Custom…') name = tmpl;
+  if(!name){ alert('Select a template or type a meeting name'); return; }
+
+  const lead = document.getElementById('add-mtg-lead').value || 'RM';
+  const agenda = document.getElementById('add-mtg-agenda').value.trim();
+  const parts = Array.from(document.querySelectorAll('.mtg-part:checked')).map(c=>c.value);
+  const participants = parts.length ? parts.join(' + ') : lead;
+  const days = Array.from(document.querySelectorAll('.mtg-day:checked')).map(c=>c.value);
+
+  const specificDate = (document.getElementById('add-mtg-date') || {}).value || '';
+  const quarterlyDate = (document.getElementById('add-mtg-quarterly-date') || {}).value || '';
+  const monthlyPattern = document.getElementById('monthly-pattern')?.value || 'specific';
+  const weekOfMonth = document.getElementById('monthly-week')?.value || '4';
+  const weekday = document.getElementById('monthly-day')?.value || 'Thursday';
+
+  let updatedMeeting = null;
+
+  if(editingMeetingIndex >= 0){
+    // Edit exactly one existing custom meeting.
+    const original = CUSTOM_MEETINGS[editingMeetingIndex];
+    if(!original){ cancelMeetingEdit(); return; }
+
+    if(level === 'Monthly'){
+      if(monthlyPattern === 'nth-week'){
+        updatedMeeting = {
+          ...original, name, level, day:'', date:'',
+          recurrence:'nth-week', weekOfMonth, weekday,
+          lead, participants, agenda, areas:agenda, output:original.output||''
+        };
+      } else {
+        if(!specificDate){ alert('Please choose a specific date for this Monthly meeting'); return; }
+        updatedMeeting = {
+          ...original, name, level, day:'', date:specificDate,
+          recurrence:'specific', weekOfMonth:'', weekday:'',
+          lead, participants, agenda, areas:agenda, output:original.output||''
+        };
+      }
+    } else if(level === 'Quarterly'){
+      if(!quarterlyDate){ alert('Please choose a specific date for this Quarterly meeting'); return; }
+      updatedMeeting = {
+        ...original, name, level, day:'', date:quarterlyDate,
+        recurrence:'specific', weekOfMonth:'', weekday:'',
+        lead, participants, agenda, areas:agenda, output:original.output||''
+      };
+    } else {
+      const selectedDays = days.length ? days : ['Thursday'];
+      // A single edited meeting becomes one record per selected weekday.
+      // Keep the first record as the edited meeting and add any additional days as copies.
+      const replacement = selectedDays.map(day=>({
+        ...original, name, level, day, date:'',
+        recurrence:'weekday', lead, participants, agenda, areas:agenda, output:original.output||''
+      }));
+      CUSTOM_MEETINGS.splice(editingMeetingIndex, 1, ...replacement);
+      saveCustom();
+      editingMeetingIndex = -1;
+      resetMeetingForm();
+      renderCustomMeetingList();
+      renderCalendar();
+      renderDailyTable();
+      renderWeeklyTable();
+      renderMonthly();
+      renderQuarterlyOnly();
+      alert('Meeting updated: '+name);
+      return;
+    }
+
+    CUSTOM_MEETINGS[editingMeetingIndex] = updatedMeeting;
+    saveCustom();
+    editingMeetingIndex = -1;
+    resetMeetingForm();
+    renderCustomMeetingList();
+    renderCalendar();
+    renderDailyTable();
+    renderWeeklyTable();
+    renderMonthly();
+    renderQuarterlyOnly();
+    alert('Meeting updated: '+name);
+    return;
+  }
+
+  // Add a new custom meeting.
+  if(level === 'Monthly'){
+    if(monthlyPattern === 'nth-week'){
+      CUSTOM_MEETINGS.push({
+        name, level, day:'', date:'',
+        recurrence:'nth-week', weekOfMonth, weekday,
+        lead, participants, agenda, areas:agenda, output:''
+      });
+      MONTHLY_REVIEWS.push({
+        timing: monthlyScheduleLabel({recurrence:'nth-week',weekOfMonth,weekday}),
+        review:name, participants, areas:agenda||'—'
+      });
+    } else {
+      if(!specificDate){ alert('Please choose a specific date for this Monthly meeting'); return; }
+      CUSTOM_MEETINGS.push({
+        name, level, day:'', date:specificDate,
+        recurrence:'specific',
+        lead, participants, agenda, areas:agenda, output:''
+      });
+      MONTHLY_REVIEWS.push({timing:specificDate, review:name, participants, areas:agenda||'—'});
+    }
+  } else if(level === 'Quarterly'){
+    if(!quarterlyDate){ alert('Please choose a specific date for this Quarterly meeting'); return; }
+    CUSTOM_MEETINGS.push({
+      name, level, day:'', date:quarterlyDate,
+      recurrence:'specific',
+      lead, participants, agenda, areas:agenda, output:''
+    });
+    QUARTERLY_AGENDA.push(name+' ('+quarterlyDate+')'+(agenda?' — '+agenda:''));
+  } else if(days.length){
+    days.forEach(day=>{
+      CUSTOM_MEETINGS.push({name, level, day, date:'', recurrence:'weekday', lead, participants, agenda, areas:agenda, output:''});
+    });
+    if(level==='Daily'){
+      DAILY_REVIEWS.push({day: days.join(', '), time:'As scheduled', review:name, participants, areas:agenda||'—', output:'As defined'});
+    } else {
+      WEEKLY_REVIEWS.push({day: days.join(', '), review:name, participants, agenda:agenda||'—', output:'As defined'});
+    }
+  } else {
+    CUSTOM_MEETINGS.push({name, level, day:'', date:'', recurrence:'default', lead, participants, agenda, areas:agenda, output:''});
+    if(level==='Daily'){
+      DAILY_REVIEWS.push({day:'Daily', time:'As scheduled', review:name, participants, areas:agenda||'—', output:'As defined'});
+    } else if(level==='Weekly'){
+      WEEKLY_REVIEWS.push({day:'Thursday', review:name, participants, agenda:agenda||'—', output:'As defined'});
+    }
+  }
+
+  saveCustom();
+  resetMeetingForm();
+  renderCustomMeetingList();
+  renderCalendar();
+  renderDailyTable();
+  renderWeeklyTable();
+  renderMonthly();
+  renderQuarterlyOnly();
+
+  const extra = level==='Monthly'
+    ? (monthlyPattern==='nth-week'
+        ? ' · '+monthlyScheduleLabel({recurrence:'nth-week',weekOfMonth,weekday})
+        : ' on '+specificDate)
+    : (level==='Quarterly' ? ' on '+quarterlyDate : (days.length ? ' · '+days.join(', ') : ''));
+  alert('Meeting added: '+name+' ('+level+extra+')');
+}
+
+function resetMeetingForm(){
+  document.getElementById('add-mtg-name').value = '';
+  document.getElementById('add-mtg-agenda').value = '';
+  document.getElementById('add-mtg-template').value = '';
+  if(document.getElementById('add-mtg-date')) document.getElementById('add-mtg-date').value = '';
+  if(document.getElementById('add-mtg-quarterly-date')) document.getElementById('add-mtg-quarterly-date').value = '';
+  if(document.getElementById('monthly-pattern')) document.getElementById('monthly-pattern').value = 'specific';
+  if(document.getElementById('monthly-week')) document.getElementById('monthly-week').value = '4';
+  if(document.getElementById('monthly-day')) document.getElementById('monthly-day').value = 'Thursday';
+  document.querySelectorAll('.mtg-day:checked, .mtg-part:checked').forEach(c=>c.checked=false);
+  document.getElementById('add-mtg-level').value = 'Daily';
+  document.getElementById('add-mtg-lead').value = 'RM';
+  const btn = document.getElementById('meeting-submit-btn');
+  if(btn) btn.textContent = 'Add Meeting';
+  const title = document.getElementById('meeting-form-title');
+  if(title) title.textContent = '3. Add Review Meeting (Daily / Weekly / Monthly / Quarterly)';
+  onMeetingLevelChange();
+  toggleMonthlyPattern();
+}
+function renderTaskEditor(){
+  const role=document.getElementById('edit-role').value;
+  const dayIdx=+document.getElementById('edit-day').value;
+  const list=(WEEKDAY_TASKS[dayIdx]&&WEEKDAY_TASKS[dayIdx][role])?WEEKDAY_TASKS[dayIdx][role]:[];
+  const box=document.getElementById('task-editor');
+  if(!list.length){ box.innerHTML='<p style="font-size:13px;color:var(--ink-soft);">No tasks.</p>'; return; }
+  box.innerHTML=list.map((t,idx)=>`<div class="add-row" style="align-items:center;">
+    <span style="width:24px;">${idx+1}.</span>
+    <input type="text" value="${t.replace(/"/g,'&quot;')}" id="te_${idx}" style="flex:1;">
+    <button class="btn ghost" onclick="WEEKDAY_TASKS[${dayIdx}]['${role}'][${idx}]=document.getElementById('te_${idx}').value.trim();saveCustom();renderTaskEditor();renderCalendar();">Save</button>
+    <button class="btn ghost" style="color:#B94A3F;" onclick="WEEKDAY_TASKS[${dayIdx}]['${role}'].splice(${idx},1);saveCustom();renderTaskEditor();renderCalendar();">Remove</button>
+  </div>`).join('');
+}
+function addCustomTask(){
+  const role=document.getElementById('add-role').value;
+  const dayIdx=+document.getElementById('add-day').value;
+  const text=document.getElementById('add-task-text').value.trim();
+  if(!text) return;
+  if(!WEEKDAY_TASKS[dayIdx][role]) WEEKDAY_TASKS[dayIdx][role]=[];
+  WEEKDAY_TASKS[dayIdx][role].push(text);
+  document.getElementById('add-task-text').value='';
+  saveCustom(); renderCalendar(); alert('Task added');
+}
+
+/* ========== EXCEL — detailed, document-aligned, visual ========== */
+function downloadExcel(){
+  if(typeof XLSX==='undefined'){ alert('Excel library not loaded'); return; }
+  const wb=XLSX.utils.book_new();
+
+  // Cover
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+    ['STAR WORLD GROUP – REVIEW CALENDAR'],
+    ['Source: Official Review Calendar document'],
+    ['Hierarchy: Sales Executive → BM → RM → GM → MD'],
+    ['Cycle: Daily Monitoring → Weekly Performance → Monthly Business → Quarterly Strategic'],
+    ['Generated: '+new Date().toISOString().slice(0,10)],
+    [],
+    ['MD RULE: MD is not part of daily operational reviews. Only critical/strategic via GM.']
+  ]), '00 Cover');
+
+  // Daily Review Calendar (exact table)
+  const dailyRows = DAILY_REVIEWS.map(r=>({
+    'Day': r.day, 'Time / Frequency': r.time, 'Review': r.review,
+    'Participants': r.participants, 'Key Review Areas': r.areas, 'Output': r.output
+  }));
+  const wsD=XLSX.utils.json_to_sheet(dailyRows);
+  wsD['!cols']=[{wch:18},{wch:14},{wch:28},{wch:32},{wch:55},{wch:28}];
+  XLSX.utils.book_append_sheet(wb, wsD, '01 Daily Review Calendar');
+
+  // Weekly Review Calendar
+  const weeklyRows = WEEKLY_REVIEWS.map(r=>({
+    'Day': r.day, 'Review Meeting': r.review, 'Participants': r.participants,
+    'Main Agenda': r.agenda, 'Output': r.output
+  }));
+  const wsW=XLSX.utils.json_to_sheet(weeklyRows);
+  wsW['!cols']=[{wch:12},{wch:36},{wch:32},{wch:55},{wch:24}];
+  XLSX.utils.book_append_sheet(wb, wsW, '02 Weekly Review Calendar');
+
+  // RM Weekly Checklist
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+    RM_WEEKLY_CHECKLIST.map((x,i)=>({'#':i+1, 'RM Weekly Review Item': x, 'Done (✓)': '', 'Notes': ''}))
+  ), '03 RM Weekly Checklist');
+
+  // Monthly
+  const monRows = MONTHLY_REVIEWS.map(r=>({
+    'Timing': r.timing, 'Review': r.review, 'Participants': r.participants, 'Key Areas': r.areas, 'Done (✓)': '', 'Date held': '', 'Notes': ''
+  }));
+  const wsM=XLSX.utils.json_to_sheet(monRows);
+  wsM['!cols']=[{wch:18},{wch:32},{wch:28},{wch:50},{wch:10},{wch:12},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, wsM, '04 Monthly Review Calendar');
+
+  // Quarterly
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+    QUARTERLY_AGENDA.map((x,i)=>({'#':i+1, 'Quarterly Agenda Item': x, 'Discussed (✓)': '', 'Decision / Action': '', 'Owner': '', 'Deadline': ''}))
+  ), '05 Quarterly Strategy Review');
+
+  // 4-week dated checklist
+  function recentSunday(d){ const x=new Date(d); x.setDate(x.getDate()-x.getDay()); x.setHours(0,0,0,0); return x; }
+  function addD(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+  const start=recentSunday(new Date());
+  const dayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const check=[];
+  for(let w=0;w<4;w++){
+    for(let d=0;d<7;d++){
+      const dt=addD(start,w*7+d);
+      const iso=dt.toISOString().slice(0,10);
+      const nice=dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+      meetingsForDay(d).forEach(m=>{
+        check.push({Date:iso,'Date display':nice, Day:dayNames[d], 'Week #':w+1, Type:'Meeting', Role:m.lead, Item:m.name, Participants:m.participants, 'Done (✓)':'', Notes:''});
+      });
+      CUSTOM_MEETINGS.filter(m=>m.date===iso).forEach(m=>{
+        check.push({Date:iso,'Date display':nice, Day:dayNames[d], 'Week #':w+1, Type:'Meeting ('+m.level+')', Role:m.lead, Item:m.name, Participants:m.participants, 'Done (✓)':'', Notes:'Custom'});
+      });
+      CUSTOM_MEETINGS.filter(m=>m.level==='Monthly' && m.recurrence==='nth-week' && isMonthlyPatternDate(dt,m.weekOfMonth,m.weekday)).forEach(m=>{
+        check.push({Date:iso,'Date display':nice, Day:dayNames[d], 'Week #':w+1, Type:'Meeting (Monthly)', Role:m.lead, Item:m.name, Participants:m.participants, 'Done (✓)':'', Notes:'Custom · '+monthlyScheduleLabel(m)});
+      });
+      const tasks=WEEKDAY_TASKS[d]||{};
+      ROLES.forEach(role=>{
+        (tasks[role]||[]).forEach((t,idx)=>{
+          check.push({Date:iso,'Date display':nice, Day:dayNames[d], 'Week #':w+1, Type:'Task', Role:role, Item:t, Participants:role, 'Done (✓)':'', Notes:''});
+        });
+      });
+    }
+  }
+  const wsC=XLSX.utils.json_to_sheet(check);
+  wsC['!cols']=[{wch:12},{wch:14},{wch:10},{wch:8},{wch:10},{wch:6},{wch:40},{wch:22},{wch:10},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, wsC, '06 Dated Checklist 4 weeks');
+
+  // Meeting format (section 7)
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+    ['REVIEW MEETING FORMAT (mandatory structure)'],
+    [],
+    ['A. Previous Review','Previous action points | Responsible | Deadline | Completed/Pending | Reason for delay'],
+    ['B. Current Performance','Target | Actual | Achievement % | Gap | Major reasons'],
+    ['C. Operational Issues','Sales | Customer | Stock | Collection | Purchase | HR | Marketing | System/SOP'],
+    ['D. Corrective Actions','Issue | Root Cause | Action | Responsible | Deadline | Reviewer'],
+    ['E. New Decisions','Every decision → Task Management System task with owner + deadline'],
+    [],
+    ['Issue','Root Cause','Action','Responsible','Deadline','Reviewer'],
+    ['','','','','','']
+  ]), '07 Meeting Format');
+
+  // Hierarchy & cycle
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+    ['FINAL STAR WORLD REVIEW CYCLE'],
+    [],
+    ['DAILY','Monitor → Identify Gap → Immediate Action'],
+    ['WEEKLY','Review Performance → Analyse Gap → Corrective Action'],
+    ['MONTHLY','Evaluate Business Performance → Review Departments → Management Decisions'],
+    ['QUARTERLY','Strategy Review → Business Direction → Major Decisions → Next-Quarter Plan'],
+    [],
+    ['Hierarchy','Sales Executive → BM → RM → GM → MD'],
+    ['Supporting','Purchase | Inventory | Finance | HR | Marketing | MIS/Digital → BM/RM/GM → MD where strategic']
+  ]), '08 Hierarchy & Cycle');
+
+  XLSX.writeFile(wb, 'StarWorld_Review_Calendar_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelector(`.tab[data-view="${name}"]`).classList.add('active');
+  if(name==='daily') renderDailyTable();
+  if(name==='weekly') renderWeeklyTable();
+  if(name==='monthly') renderMonthly();
+  if(name==='quarterly') renderQuarterlyOnly();
+  if(name==='today') showToday();
+  if(name==='manage') { renderManage(); }
+}
+function renderQuarterlyOnly(){
+  let items = QUARTERLY_AGENDA.map(x=>'<li>'+x+'</li>').join('');
+  const customs = CUSTOM_MEETINGS.filter(m=>m.level==='Quarterly');
+  if(customs.length){
+    items += customs.map(m=>'<li style="color:#6A1B9A;"><strong>[Custom]</strong> '+m.name+(m.date?' ('+m.date+')':'')+(m.agenda?' — '+m.agenda:'')+'</li>').join('');
+  }
+  document.getElementById('quarterly-agenda').innerHTML = items;
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchView(t.dataset.view)));
+document.getElementById('role-filters').addEventListener('click',e=>{
+  const c=e.target.closest('.role-chip'); if(!c) return;
+  document.querySelectorAll('.role-chip').forEach(x=>x.classList.remove('active'));
+  c.classList.add('active'); currentRole=c.dataset.role; renderCalendar();
+});
+
+(function init(){
+  const ms=document.getElementById('month-select');
+  const ys=document.getElementById('year-select');
+  const now=new Date();
+  for(let m=0;m<12;m++){ const o=document.createElement('option'); o.value=m; o.textContent=new Date(2026,m,1).toLocaleString('en',{month:'long'}); if(m===now.getMonth()) o.selected=true; ms.appendChild(o); }
+  for(let y=2026;y<=2027;y++){ const o=document.createElement('option'); o.value=y; o.textContent=y; if(y===now.getFullYear()) o.selected=true; ys.appendChild(o); }
+  renderCalendar();
+  onMeetingLevelChange();
+})();
+</script>
+</body>
+</html>
